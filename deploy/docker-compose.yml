@@ -2,10 +2,20 @@ version: '3'
 
 services:
     db:
-        container_name: 'shortener_postgres'
+        container_name: 'service_postgres'
         image: 'postgres:14'
         restart: always
         env_file:
             - ./.env
         ports:
             - '${POSTGRES_PORT}:${POSTGRES_PORT}'
+        volumes:
+            - ./create_table.sql:/docker-entrypoint-initdb.d/1-create_table.sql:rw
+    nats-streaming:
+        container_name: 'service_nats'
+        image: 'nats-streaming:latest'
+        ports:
+            - '4222:4222' # Порт для обемена сообщениями NATS
+            - '8222:8222' # Порт для мониторинга NATS
+        volumes:
+            - ./data:/data:rw # Директория для хранения данных

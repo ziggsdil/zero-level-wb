@@ -48,10 +48,13 @@ run:  ##@Application Run application server
 	go run $(ROOT_FOLDER)/cmd --config $(ROOT_FOLDER)/deploy
 
 open_db:  ##@Database Open database console inside docker-image
-	docker exec -it shortener_postgres psql -d $(POSTGRES_DB) -U $(POSTGRES_USER)
+	docker exec -it $(POSTGRES_DB) psql -d $(POSTGRES_DB) -U $(POSTGRES_USER)
 
 clean_db: ##@Database Stop database and clean its data
 	docker stop shortener_postgres && docker rm shortener_postgres
+
+open_nats: ##@NATS Open NATS console inside docker-image
+	docker exec -it 69015ea76e05 /bin/sh
 
 test:  ##@Testing Test application with gotest (be careful: tests drops all data in database from env)
 	make db && go test $(ROOT_FOLDER)/pkg/handler
