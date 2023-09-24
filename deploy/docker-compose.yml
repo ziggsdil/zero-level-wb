@@ -17,5 +17,7 @@ services:
         ports:
             - '4222:4222' # Порт для обемена сообщениями NATS
             - '8222:8222' # Порт для мониторинга NATS
+        command:
+            - '-cid=zero-level-server'
         volumes:
             - ./data:/data:rw # Директория для хранения данных

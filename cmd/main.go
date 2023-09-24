@@ -6,8 +6,10 @@ import (
 	"github.com/heetch/confita"
 	"github.com/heetch/confita/backend/env"
 	"github.com/heetch/confita/backend/file"
+	"github.com/nats-io/stan.go"
 	"github.com/ziggsdil/zero-level-wb/pkg/config"
-	"github.com/ziggsdil/zero-level-wb/pkg/db"
+	"github.com/ziggsdil/zero-level-wb/pkg/nats"
+	"log"
 )
 
 func main() {
@@ -23,10 +25,40 @@ func main() {
 		return
 	}
 
-	postgres, dbErr := db.NewDatabase(cfg.Postgres)
-	if dbErr != nil {
-		fmt.Printf("failed to connect to postgresql: %s\n", dbErr.Error())
+	//postgres, err := db.NewDatabase(cfg.Postgres)
+	//if err != nil {
+	//	fmt.Printf("failed to connect to postgresql: %s\n", err.Error())
+	//	return
+	//}
+
+	// todo: create nats-streaming connection
+	nc, err := nats.NewNatsConnection(cfg.Nats)
+	if err != nil {
+		fmt.Printf("failed to connect to nats-streaming: %s\n", err.Error())
 		return
 	}
+	defer func() { _ = nc.Close() }()
+	//nc, err := stan.Connect("zero-level-server", "zero-level-client")
+	//if err != nil {
+	//	fmt.Printf("failed to connect to nats-streaming: %s\n", err.Error())
+	//	return
+	//}
+	//defer nc.Close()
 
+	sub, err := nc.Subscribe("foo", func(m *stan.Msg) {
+		fmt.Printf("Received a message: %s\n", string(m.Data))
+	})
+	if err != nil {
+		log.Fatalf("failed to subscribe to channel: %s\n", err.Error())
+	}
+	defer sub.Unsubscribe()
+
+	err = nc.Publish("foo", []byte("Hello world!"))
+	if err != nil {
+		log.Fatalf("failed to publish message: %s\n", err.Error())
+	}
+
+	select {}
+
+	// todo: handleMessage
 }

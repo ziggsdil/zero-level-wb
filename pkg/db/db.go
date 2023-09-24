@@ -1,7 +1,9 @@
 package db
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,4 +23,23 @@ func NewDatabase(config Config) (*Database, error) {
 	}
 
 	return &Database{client: client}, nil
+}
+
+func (db *Database) GetOrder(ctx context.Context, orderId string) (map[string]interface{}, error) {
+	row := db.client.QueryRowContext(ctx, selectDataByOrderId, orderId)
+
+	jsonData := make([]byte, 0)
+	err := row.Scan(&jsonData)
+	if err != nil {
+		return nil, err
+	}
+
+	dataMap := make(map[string]interface{})
+
+	err = json.Unmarshal(jsonData, &dataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return dataMap, err
 }

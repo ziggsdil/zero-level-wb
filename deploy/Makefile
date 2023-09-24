@@ -51,7 +51,7 @@ open_db:  ##@Database Open database console inside docker-image
 	docker exec -it $(POSTGRES_DB) psql -d $(POSTGRES_DB) -U $(POSTGRES_USER)
 
 clean_db: ##@Database Stop database and clean its data
-	docker stop shortener_postgres && docker rm shortener_postgres
+	docker stop $(POSTGRES_DB) && docker rm $(POSTGRES_DB)
 
 open_nats: ##@NATS Open NATS console inside docker-image
 	docker exec -it 69015ea76e05 /bin/sh
