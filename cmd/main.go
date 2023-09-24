@@ -17,7 +17,7 @@ func main() {
 	var cfg config.Config
 
 	err := confita.NewLoader(
-		file.NewBackend("./default.yaml"),
+		file.NewBackend("./deploy/default.yaml"),
 		env.NewBackend(),
 	).Load(ctx, &cfg)
 	if err != nil {
@@ -38,12 +38,6 @@ func main() {
 		return
 	}
 	defer func() { _ = nc.Close() }()
-	//nc, err := stan.Connect("zero-level-server", "zero-level-client")
-	//if err != nil {
-	//	fmt.Printf("failed to connect to nats-streaming: %s\n", err.Error())
-	//	return
-	//}
-	//defer nc.Close()
 
 	sub, err := nc.Subscribe("foo", func(m *stan.Msg) {
 		fmt.Printf("Received a message: %s\n", string(m.Data))
@@ -53,11 +47,7 @@ func main() {
 	}
 	defer sub.Unsubscribe()
 
-	err = nc.Publish("foo", []byte("Hello world!"))
-	if err != nil {
-		log.Fatalf("failed to publish message: %s\n", err.Error())
-	}
-
+	// for loop listen
 	select {}
 
 	// todo: handleMessage
