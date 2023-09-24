@@ -43,3 +43,8 @@ func (db *Database) GetOrder(ctx context.Context, orderId string) (map[string]in
 
 	return dataMap, err
 }
+
+func (db *Database) InsertData(ctx context.Context, orderId string, data []byte) error {
+	_, err := db.client.ExecContext(ctx, saveMessage, orderId, data)
+	return err
+}
