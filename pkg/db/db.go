@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 )
 
@@ -25,26 +24,48 @@ func NewDatabase(config Config) (*Database, error) {
 	return &Database{client: client}, nil
 }
 
-func (db *Database) GetOrder(ctx context.Context, orderId string) (map[string]interface{}, error) {
+func (db *Database) GetAllData(ctx context.Context) (map[string][]byte, error) {
+	rows, err := db.client.QueryContext(ctx, selectAllData)
+	if err != nil {
+		fmt.Printf("Failed to do query: %s\n", err.Error())
+		return nil, err
+	}
+	defer rows.Close()
+
+	data := make(map[string][]byte)
+
+	for rows.Next() {
+		var orderId string
+		var jsonData []byte
+
+		if err = rows.Scan(&orderId, &jsonData); err != nil {
+			return data, err
+		}
+		data[orderId] = jsonData
+	}
+
+	if err = rows.Err(); err != nil {
+		return data, err
+	}
+
+	return data, nil
+}
+
+func (db *Database) GetOrder(ctx context.Context, orderId string) ([]byte, error) {
 	row := db.client.QueryRowContext(ctx, selectDataByOrderId, orderId)
 
 	jsonData := make([]byte, 0)
 	err := row.Scan(&jsonData)
 	if err != nil {
+		fmt.Printf("Failed to scan order: %s\n", err.Error())
 		return nil, err
 	}
-
-	dataMap := make(map[string]interface{})
-
-	err = json.Unmarshal(jsonData, &dataMap)
-	if err != nil {
-		return nil, err
-	}
-
-	return dataMap, err
+	return jsonData, err
 }
 
 func (db *Database) InsertData(ctx context.Context, orderId string, data []byte) error {
+	// todo: check if orderId already exist
+	// we can use map for check
 	_, err := db.client.ExecContext(ctx, saveMessage, orderId, data)
 	return err
 }

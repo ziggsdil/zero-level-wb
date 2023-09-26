@@ -1,37 +1,48 @@
 package nats
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/nats-io/stan.go"
+	"github.com/ziggsdil/zero-level-wb/pkg/db"
 	"github.com/ziggsdil/zero-level-wb/pkg/models"
 )
 
-type Nats struct {
-	Conn stan.Conn
-}
-
-func NewNatsConnection(cfg Config) (stan.Conn, error) {
+func RunNatsService(db *db.Database, ctx context.Context, cfg Config) error {
 	nc, err := stan.Connect(cfg.ServerID, cfg.ClientID)
 	if err != nil {
-		return nil, err
+		fmt.Printf("Failed to connect to nats: %s\n", err.Error())
 	}
-	return nc, nil
+	defer nc.Close()
+
+	_, err = nc.Subscribe("foo", func(msg *stan.Msg) {
+		if err = messageHandler(ctx, db, msg.Data); err != nil {
+			return
+		}
+	}, stan.StartWithLastReceived())
+	if err != nil {
+		fmt.Printf("Failed to subscribe on channel: %s\n", err.Error())
+		return err
+	}
+
+	select {}
 }
 
-//	func (n *Nats) SubscribeToChannel(channelName string, handler func(m *stan.Msg)) {
-//		sub, err := n.Conn.Subscribe(channelName, handler)
-//		if err != nil {
-//			log.Fatalf("failed to subscribe to channel: %s\n", err.Error())
-//
-//		}
-//	}
-func IsValid(data []byte) bool {
+func messageHandler(ctx context.Context, db *db.Database, data []byte) error {
 	var jsonData *models.Message
 
+	// validate is json
 	if err := json.Unmarshal(data, &jsonData); err != nil {
-		fmt.Printf("Received an invalid JSON message: %s\n", err.Error())
-		return false
+		fmt.Printf("Failed to unmarshall data: %s\n", err.Error())
+		return err
 	}
-	return true
+
+	if err := db.InsertData(ctx, jsonData.OrderUID, data); err != nil {
+		fmt.Printf("Failed to insert data: %s\n", err.Error())
+		return err
+	}
+	// после того как успешно внеслось в бд, то я должен добавить это в кэш
+
+	return nil
 }

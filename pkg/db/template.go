@@ -11,4 +11,8 @@ const (
 		INSERT INTO orders(order_uid, data)
 			VALUES ($1, $2)
 	`
+
+	selectAllData = `
+		SELECT * FROM orders
+	`
 )
