@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nats-io/stan.go"
+	serviceCache "github.com/patrickmn/go-cache"
 	"github.com/ziggsdil/zero-level-wb/pkg/db"
 	"github.com/ziggsdil/zero-level-wb/pkg/models"
 )
 
-func RunNatsService(db *db.Database, ctx context.Context, cfg Config) error {
+func RunNatsService(db *db.Database, ctx context.Context, cfg Config, c *serviceCache.Cache) error {
 	nc, err := stan.Connect(cfg.ServerID, cfg.ClientID)
 	if err != nil {
 		fmt.Printf("Failed to connect to nats: %s\n", err.Error())
@@ -17,7 +18,7 @@ func RunNatsService(db *db.Database, ctx context.Context, cfg Config) error {
 	defer nc.Close()
 
 	_, err = nc.Subscribe("foo", func(msg *stan.Msg) {
-		if err = messageHandler(ctx, db, msg.Data); err != nil {
+		if err = messageHandler(ctx, db, msg.Data, c); err != nil {
 			return
 		}
 	}, stan.StartWithLastReceived())
@@ -29,10 +30,9 @@ func RunNatsService(db *db.Database, ctx context.Context, cfg Config) error {
 	select {}
 }
 
-func messageHandler(ctx context.Context, db *db.Database, data []byte) error {
+func messageHandler(ctx context.Context, db *db.Database, data []byte, c *serviceCache.Cache) error {
 	var jsonData *models.Message
 
-	// validate is json
 	if err := json.Unmarshal(data, &jsonData); err != nil {
 		fmt.Printf("Failed to unmarshall data: %s\n", err.Error())
 		return err
@@ -42,7 +42,13 @@ func messageHandler(ctx context.Context, db *db.Database, data []byte) error {
 		fmt.Printf("Failed to insert data: %s\n", err.Error())
 		return err
 	}
-	// после того как успешно внеслось в бд, то я должен добавить это в кэш
 
+	bytes, err := json.Marshal(jsonData)
+	if err != nil {
+		fmt.Printf("Failed to marshall structure: %s\n", bytes)
+		return err
+	}
+
+	c.SetDefault(jsonData.OrderUID, bytes)
 	return nil
 }
