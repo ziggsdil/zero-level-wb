@@ -2,24 +2,30 @@ package handler
 
 import (
 	"github.com/go-chi/chi/v5"
+	serviceCache "github.com/patrickmn/go-cache"
 	"github.com/ziggsdil/zero-level-wb/pkg/db"
+	"github.com/ziggsdil/zero-level-wb/pkg/renderer"
 )
 
 type Handler struct {
 	db *db.Database
+	c  *serviceCache.Cache
+
+	renderer renderer.Renderer
 }
 
-func NewHandler(db *db.Database) *Handler {
+func NewHandler(db *db.Database, c *serviceCache.Cache) *Handler {
 	return &Handler{
 		db: db,
+		c:  c,
 	}
 }
 
 func (h *Handler) Router() chi.Router {
 	router := chi.NewRouter()
 
-	router.Route("/", func(r chi.Router) {
-		r.Get("/add", h.GetInfo)
+	router.Route("/api", func(r chi.Router) {
+		r.Get("/info", h.GetInfo)
 	})
 
 	return router

@@ -54,7 +54,7 @@ func main() {
 		return
 	}
 
-	handlers := handler.NewHandler(postgres) // если мы выдаем из кэша данные, то не нужна база данных
+	handlers := handler.NewHandler(postgres, c) // если мы выдаем из кэша данные, то не нужна база данных
 	srv := &http.Server{
 		Addr:    "localhost:8080",
 		Handler: handlers.Router(),
