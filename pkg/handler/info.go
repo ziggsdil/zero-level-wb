@@ -7,8 +7,6 @@ import (
 )
 
 func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request) {
-	//ctx := r.Context()
-
 	// todo: implement
 	orderID := chi.URLParam(r, "orderID")
 	if orderID == "" {
@@ -18,7 +16,7 @@ func (h *Handler) GetInfo(w http.ResponseWriter, r *http.Request) {
 
 	data, ok := h.c.Get(orderID)
 	if !ok {
-		h.renderer.RenderError(w, fmt.Errorf("Failed to find key: %s\n", orderID))
+		h.renderer.RenderError(w, fmt.Errorf("failed to find key: %s", orderID))
 		return
 	}
 

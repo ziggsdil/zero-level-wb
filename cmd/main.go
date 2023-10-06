@@ -6,6 +6,7 @@ import (
 	"github.com/heetch/confita"
 	"github.com/heetch/confita/backend/env"
 	"github.com/heetch/confita/backend/file"
+	_ "github.com/lib/pq"
 	serviceCache "github.com/patrickmn/go-cache"
 	"github.com/ziggsdil/zero-level-wb/pkg/cache"
 	"github.com/ziggsdil/zero-level-wb/pkg/config"
@@ -25,11 +26,16 @@ func main() {
 
 	var cfg config.Config
 
-	var wg *sync.WaitGroup
+	wg := &sync.WaitGroup{}
 	defer wg.Wait()
 
-	err := confita.NewLoader(
-		file.NewBackend("./deploy/default.yaml"),
+	path, err := os.Getwd()
+	if err != nil {
+		fmt.Printf("Failed to get wd: %s\n", err.Error())
+		return
+	}
+	err = confita.NewLoader(
+		file.NewBackend(fmt.Sprintf("%s/deploy/default.yaml", path)),
 		env.NewBackend(),
 	).Load(ctx, &cfg)
 	if err != nil {
@@ -54,7 +60,7 @@ func main() {
 		return
 	}
 
-	handlers := handler.NewHandler(postgres, c) // если мы выдаем из кэша данные, то не нужна база данных
+	handlers := handler.NewHandler(postgres, c)
 	srv := &http.Server{
 		Addr:    "localhost:8080",
 		Handler: handlers.Router(),

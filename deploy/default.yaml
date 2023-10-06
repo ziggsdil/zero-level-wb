@@ -1,6 +1,9 @@
 postgres:
   port: 5432
   host: localhost
+  database: service_postgres
+  user: user
+  password: hackme
 
 nats:
   serverID: zero-level-server

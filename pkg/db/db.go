@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 )
 
 type Database struct {
@@ -15,7 +16,6 @@ func NewDatabase(config Config) (*Database, error) {
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.Host, config.Port, config.User, config.Password, config.Database,
 	)
-
 	client, err := sql.Open("postgres", connInfo)
 	if err != nil {
 		return nil, err
@@ -67,5 +67,8 @@ func (db *Database) InsertData(ctx context.Context, orderId string, data []byte)
 	// todo: check if orderId already exist
 	// we can use map for check
 	_, err := db.client.ExecContext(ctx, saveMessage, orderId, data)
+	if err == nil {
+		log.Printf("Data with orderId: %s was success saved\n", orderId)
+	}
 	return err
 }

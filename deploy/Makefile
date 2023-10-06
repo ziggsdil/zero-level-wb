@@ -44,8 +44,13 @@ help: ##@Help Show this help
 db:  ##@Database Create database with docker-compose
 	docker-compose -f docker-compose.yml up -d --remove-orphans
 
-run:  ##@Application Run application server
-	go run $(ROOT_FOLDER)/cmd --config $(ROOT_FOLDER)/deploy
+run: ##@Application Run application server and script for publish
+	@echo "Run application server and scripts"
+	go run $(ROOT_FOLDER)/cmd
+	@echo "Done"
+
+#run:  ##@Application Run application server
+#	go run $(ROOT_FOLDER)/cmd --config $(ROOT_FOLDER)/deploy
 
 open_db:  ##@Database Open database console inside docker-image
 	docker exec -it $(POSTGRES_DB) psql -d $(POSTGRES_DB) -U $(POSTGRES_USER)

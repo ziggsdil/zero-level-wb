@@ -8,6 +8,7 @@ import (
 	serviceCache "github.com/patrickmn/go-cache"
 	"github.com/ziggsdil/zero-level-wb/pkg/db"
 	"github.com/ziggsdil/zero-level-wb/pkg/models"
+	"log"
 )
 
 func RunNatsService(db *db.Database, ctx context.Context, cfg Config, c *serviceCache.Cache) error {
@@ -31,10 +32,15 @@ func RunNatsService(db *db.Database, ctx context.Context, cfg Config, c *service
 }
 
 func messageHandler(ctx context.Context, db *db.Database, data []byte, c *serviceCache.Cache) error {
-	var jsonData *models.Message
+	var jsonData models.Message
 
-	if err := json.Unmarshal(data, &jsonData); err != nil {
-		fmt.Printf("Failed to unmarshall data: %s\n", err.Error())
+	err := json.Unmarshal(data, &jsonData)
+	if err != nil {
+		log.Printf("error decoding json response: %v\n", err)
+		if e, ok := err.(*json.SyntaxError); ok {
+			log.Printf("syntax error at byte offset %d\n", e.Offset)
+		}
+		log.Printf("json response: %q\n", jsonData)
 		return err
 	}
 

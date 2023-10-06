@@ -25,7 +25,9 @@ func (h *Handler) Router() chi.Router {
 	router := chi.NewRouter()
 
 	router.Route("/api", func(r chi.Router) {
-		r.Get("/info", h.GetInfo)
+		r.Route("/info", func(r chi.Router) {
+			r.Get("/{orderID}", h.GetInfo)
+		})
 	})
 
 	return router
